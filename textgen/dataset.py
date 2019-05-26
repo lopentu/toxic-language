@@ -1,4 +1,5 @@
 import pickle
+import random
 import torch
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
@@ -14,6 +15,7 @@ class ToxicDataset(Dataset):
         return f"<ToxicDataset: {len(self)} samples>"
 
     def build_data(self, src_df, tgt_df, src_vocab, tgt_vocab):        
+        random.seed(34343)
         for ridx, row in tgt_df.iterrows():
             try:
                 txt = src_df.loc[row.TextId, :]
@@ -21,8 +23,11 @@ class ToxicDataset(Dataset):
                 print(f"Cannot find {row.TextId}")
                 continue
             text_vec = convert_text(txt.TextContent, src_vocab)
+            text_vec_sub = [x for x in text_vec if random.random() > 0.25]         
+            if len(text_vec_sub) < 3:
+                text_vec_sub = text_vec
             tgt_vec = convert_comment(row.CommentContent, tgt_vocab)
-            self.data.append((text_vec, tgt_vec))            
+            self.data.append((text_vec_sub, tgt_vec))            
         
         self.data = sorted(self.data, key=lambda x: len(x[0]))
 
@@ -31,7 +36,7 @@ class ToxicDataset(Dataset):
 
     def __getitem__(self, idx):
         #pylint: disable=no-member
-        src, tgt = self.data[idx]
+        src, tgt = self.data[-(idx+1)]
         src_tensor = torch.LongTensor(src)
         tgt_tensor = torch.LongTensor(tgt)
 

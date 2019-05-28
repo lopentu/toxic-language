@@ -2,10 +2,12 @@ from flask import request, Flask
 from flask import jsonify
 from flask_cors import CORS
 from textgen import NNTextGen
+from textsim import SimilarComments
 
 app = Flask(__name__)
 CORS(app)
 model = NNTextGen()
+simcom = SimilarComments()
 
 @app.route("/textgen", methods=["GET"])
 def on_get():
@@ -29,8 +31,12 @@ def on_post():
         return resp
 
     comments = model.predict(intext)
-    resp = jsonify({"comments": comments})
+    sampled = simcom.comments(intext)
+    resp = jsonify({"comments": comments, "sampled":sampled})
     resp.status_code = 200
     return resp
 
 app.config["JSON_AS_ASCII"] = False
+
+if __name__ == "__main__":
+    app.run()

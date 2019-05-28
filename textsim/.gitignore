@@ -1,0 +1,6 @@
+*~
+*.tmp
+*.swp
+
+data/
+resources/ 
